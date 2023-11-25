@@ -10,7 +10,7 @@
 
 export interface Env {
 	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
-	// MY_KV_NAMESPACE: KVNamespace;
+	EIDOS_PUBLISH: KVNamespace;
 	//
 	// Example binding to Durable Object. Learn more at https://developers.cloudflare.com/workers/runtime-apis/durable-objects/
 	// MY_DURABLE_OBJECT: DurableObjectNamespace;
@@ -25,8 +25,76 @@ export interface Env {
 	// MY_QUEUE: Queue;
 }
 
+const getDoc = async (id: string, env: Env) => {
+	const content = env.EIDOS_PUBLISH.get(id);
+	return content;
+};
+
+const putDoc = async (id: string, content: string, env: Env) => {
+	return env.EIDOS_PUBLISH.put(id, content);
+};
+
+const allowedDomains = ['eidos.space'];
+const handleCors = (request: Request) => {
+	const origin = request.headers.get('Origin');
+	if (origin && allowedDomains.includes(new URL(origin).hostname)) {
+		return new Response(null, {
+			headers: {
+				'Access-Control-Allow-Origin': origin,
+				'Access-Control-Allow-Methods': 'GET, HEAD, POST, PUT, OPTIONS',
+				'Access-Control-Allow-Headers': 'Content-Type',
+			},
+		});
+	}
+	return new Response(null, {
+		headers: {
+			'Access-Control-Allow-Origin': '*',
+			'Access-Control-Allow-Methods': 'GET, HEAD, POST, PUT, OPTIONS',
+			'Access-Control-Allow-Headers': 'Content-Type',
+		},
+	});
+};
+
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+		const url = new URL(request.url);
+		const path = url.pathname;
+		const method = request.method;
+		const id = path.substring(1);
+		const origin = request.headers.get('Origin');
+
+		if (method === 'OPTIONS') {
+			return handleCors(request);
+		}
+		if (!id) {
+			return new Response('Hello World!');
+		}
+		if (method === 'GET') {
+			const content = await getDoc(id, env);
+			if (!content) {
+				return new Response('Not Found', {
+					status: 404,
+					statusText: 'Not Found',
+					headers: { 'Content-Type': 'text/plain' },
+				});
+			}
+			return new Response(content, {
+				headers: {
+					'content-type': 'text/html;charset=UTF-8',
+				},
+			});
+		} else if (method === 'PUT') {
+			const content = await request.text();
+			await putDoc(id, content, env);
+			return new Response(JSON.stringify({ id }), {
+				status: 201,
+				statusText: 'Created',
+				headers: {
+					'Content-Type': 'application/json',
+					'Access-Control-Allow-Origin': origin!,
+				},
+			});
+		}
 		return new Response('Hello World!');
 	},
 };
