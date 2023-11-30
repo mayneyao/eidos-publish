@@ -8,7 +8,10 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
+import { handleFile } from './files';
+
 export interface Env {
+	AUTH_KEY_SECRET: string;
 	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
 	EIDOS_PUBLISH: KVNamespace;
 	//
@@ -16,7 +19,7 @@ export interface Env {
 	// MY_DURABLE_OBJECT: DurableObjectNamespace;
 	//
 	// Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
-	// MY_BUCKET: R2Bucket;
+	EIDOS_PUBLISH_BUCKET: R2Bucket;
 	//
 	// Example binding to a Service. Learn more at https://developers.cloudflare.com/workers/runtime-apis/service-bindings/
 	// MY_SERVICE: Fetcher;
@@ -62,6 +65,9 @@ export default {
 		const method = request.method;
 		const id = path.substring(1);
 		const origin = request.headers.get('Origin');
+		if (path.startsWith('/files')) {
+			return handleFile(request, env, ctx);
+		}
 
 		if (method === 'OPTIONS') {
 			return handleCors(request);
