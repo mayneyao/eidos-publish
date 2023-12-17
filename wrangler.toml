@@ -20,6 +20,12 @@ id = "7b167b066b6a418696a20e40b3443e4c"
 binding = "EIDOS_PUBLISH_BUCKET"
 bucket_name = "eidos-publish"
 
+
+[[d1_databases]]
+binding = "DB"                                       # i.e. available in your Worker on env.DB
+database_name = "eidos-publish-db"
+database_id = "4bdd7613-b31e-4355-aafb-eed7ff86df0b"
+
 # Bind a Queue producer. Use this binding to schedule an arbitrary task that may be processed later by a Queue consumer.
 # Docs: https://developers.cloudflare.com/queues/get-started
 # [[queues.producers]]
