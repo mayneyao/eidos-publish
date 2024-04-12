@@ -2,7 +2,9 @@ import { EContext, validateRequest } from '../helper';
 
 export async function getFile(c: EContext) {
 	const path = c.req.param('path');
-	const object = await c.env.EIDOS_PUBLISH_BUCKET.get(path);
+	const subdomain = c.req.param('subdomain');
+	const key = `${subdomain}/${path}`;
+	const object = await c.env.EIDOS_PUBLISH_BUCKET.get(key);
 	if (object === null) {
 		return c.text('Not Found', {
 			status: 404,
@@ -25,6 +27,18 @@ export async function uploadFile(c: EContext) {
 	if (!valid) {
 		return c.json({ success: false, message: 'authentication failed' });
 	}
-	await c.env.EIDOS_PUBLISH_BUCKET.put(path, c.req.raw.body);
+	const key = `${subdomain}/${path}`;
+	await c.env.EIDOS_PUBLISH_BUCKET.put(key, c.req.raw.body);
+	return c.json({ success: true });
+}
+
+export async function checkFile(c: EContext) {
+	const path = c.req.param('path');
+	const subdomain = c.req.param('subdomain');
+	const key = `${subdomain}/${path}`;
+	const object = await c.env.EIDOS_PUBLISH_BUCKET.get(key);
+	if (object === null) {
+		return c.json({ success: false, message: 'File not found' });
+	}
 	return c.json({ success: true });
 }

@@ -33,6 +33,8 @@ export async function publishNode(c: EContext) {
 	const { results } = await c.env.DB.prepare(`select * from node where id = ? and subdomain = ?`).bind(nodeId, subdomain).all();
 	if (results.length === 0) {
 		await c.env.DB.prepare(`insert into node (id,subdomain,slug) values (?,?,?)`).bind(nodeId, subdomain, slug).run();
+	} else {
+		await c.env.DB.prepare(`update node set slug = ? where id = ? and subdomain = ?`).bind(slug, nodeId, subdomain).run();
 	}
 	return c.json({ success: true });
 }
